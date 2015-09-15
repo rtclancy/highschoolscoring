@@ -1,0 +1,278 @@
+#!/cygdrive/c/tcl/bin/tclsh86.exe
+
+package require sqlite3;
+
+#create database
+sqlite3 db ../data/database.db;
+
+set Varsity_roster {
+"Andrea Basilicato         "
+"Bronagh Lonergan	   "
+"Camryn McGuire		   "
+"Catherine Lawrence	   "
+"Chloe Shaw		   "
+"Chrystina Bonelli	   "
+"Deirdre Hackett	   "
+"Emma Rusconi		   "
+"Erin Lamberton		   "
+"Faren Roth		   "
+"Grace Clancy		   "
+"Isabella Nerney	   "
+"Jacque Guerra		   "
+"Jia Spiggle		   "
+"Kayley McLaughlin	   "
+"Lindsey Hiltz		   "
+"Maddie Panagoulias	   "
+"Molly Kosh		   "
+"Nicolette de Repentigny   "
+"Paige White		   "
+"Taylor Shutak		   "
+"Taylor Weischet           "
+};
+
+set JV_roster {
+"Abigail Yerkes            "
+"Ainsley Mackenzie	   "
+"Caroline Basil		   "
+"Catherine Miller	   "
+"Charlotte Young	   "
+"Devyn Luden		   "
+"Elissa Strand		   "
+"Emma Bosenberg		   "
+"Emma Lim		   "
+"Gabby Palumbo		   "
+"Jody Smith		   "
+"Laura Markle		   "
+"Lauren Hilgert		   "
+"Lindsey Hiltz		   "
+"Mabel Bartlett		   "
+"Maddie Monte		   "
+"Molly Linell		   "
+"Olivia Mirek		   "
+"Sadie Slade               "
+};
+
+set Freshmen_roster {
+"Abbey Vilaseca            "
+"Allie Stankewich	   "
+"Brielle Kendrioski	   "
+"Caroline Fitzgerald	   "
+"Chloe Shoff		   "
+"Haley Albert		   "
+"Jacquie Violette	   "
+"Maeve Grattan		   "
+"Meagan Cousins		   "
+"Meghan Landon		   "
+"Meghan Landon		   "
+"Nell Kinney		   "
+"Nicole Tepley		   "
+"Priscilla Rodriguez	   "
+"Summer Heckler		   "
+"Tatum Meder		   "
+"Taylor Burkle		   "
+"Yanenash Ayele            "
+};
+
+proc table_spacer {lines} {
+    puts $::html_out "<br>";
+}
+
+proc html_header {} {
+    puts $::html_out "<html>"
+    #puts $::html_out "<body background=\"files/hs.jpg\">";
+    puts $::html_out "<body bgcolor=\"#42c020\">";
+
+}
+proc html_trailer {} {
+    puts $::html_out "</body>";
+    puts $::html_out "</html>";
+}
+
+proc table_header {title} {
+    puts $::html_out "<table border=\"5\">"
+    puts $::html_out "<tbody>"
+    puts $::html_out "<tr>";
+    puts $::html_out "<td><b>$title</td>";
+    puts $::html_out "</tr>";
+}
+
+proc table_trailer {} {
+    puts $::html_out "</tbody>";
+    puts $::html_out "</table>";
+}
+
+proc table_data {data {bold 0}} {
+    if {$bold} {
+	puts $::html_out "<td><b>$data</td>";
+    } else {
+	puts $::html_out "<td>$data</td>";
+    }
+}
+proc table_row_start {} {
+    puts $::html_out "<tr>";
+}
+proc table_row_end {} {
+    puts $::html_out "<tr>";
+}
+
+
+
+#create table
+db eval {CREATE TABLE game_table(team text, date text, opponent text, venue text, win_loss text , score text)};
+db eval {CREATE TABLE player_table(name text, goals int, assists int, points int, date text , team text)};
+#db eval "INSERT INTO game_table VALUES(\"Varsity\",\"9/11/2015\",\"Branford\",\"Away\",\"W\",\"4-1\")";
+
+
+#read game data from csv and populate tables
+set fin [open "../data/games.csv"];
+set header_line 1;
+gets $fin line_in;
+while {![eof $fin]} {
+    if {$header_line} {
+	set header_line 0;
+    } else {
+	#puts $line_in;
+	set line_list [split $line_in {,}];
+	#puts $line_list;
+	set db_values "";
+	for {set i 0} {$i < 6} {incr i} {
+	    if {$i !=0 } {set db_values "$db_values,";}
+	    set db_values "$db_values\"[lindex $line_list $i]\"";
+	}
+	#puts $db_values;
+#	exit;
+	db eval "INSERT INTO game_table VALUES($db_values)";
+    }
+    gets $fin line_in;
+}
+
+#read player data from csv and populate tables
+set fin [open "../data/players.csv"];
+set header_line 1;
+gets $fin line_in;
+while {![eof $fin]} {
+    if {$header_line} {
+	set header_line 0;
+    } else {
+	#puts $line_in;
+	set line_list [split $line_in {,}];
+	#puts $line_list;
+	set db_values "";
+	for {set i 0} {$i < 6} {incr i} {
+	    if {$i !=0 } {set db_values "$db_values,";}
+	    set db_values "$db_values\"[lindex $line_list $i]\"";
+	}
+	#puts $db_values;
+#	exit;
+	db eval "INSERT INTO player_table VALUES($db_values)";
+    }
+    gets $fin line_in;
+}
+
+#build game data, (draws data from both tables)
+
+set html_out [open girls_games_2015.html w];
+html_header;
+foreach team {Varsity JV Freshmen} {
+set game_list [db eval "SELECT date FROM game_table WHERE team=\"$team\""]; 
+table_header "$team Results 2015";
+table_row_start;
+foreach item {Date Opponent Home/Away Result Score Goals Assists} {table_data $item 1;}
+table_row_end;
+foreach game $game_list {
+    table_row_start;
+ #   puts $game;
+    #puts "+++++++++++++++++++++++++++++++++++++++++++++++";
+    set game_data [db eval "SELECT date,opponent,venue,win_loss,score FROM game_table WHERE date=\"$game\" and team=\"$team\""];
+    set goals [db eval "SELECT name,goals FROM player_table WHERE team=\"$team\" AND date=\"$game\" and team=\"$team\" AND goals!=0"];
+    set assists [db eval "SELECT name,assists FROM player_table WHERE team=\"$team\" AND date=\"$game\" and team=\"$team\" AND assists!=0"];
+    #puts Game:$game_data;
+    #puts Goals:$goals;
+    #puts Assists:$assists;
+    foreach item $game_data  {table_data $item;} 
+    table_data $goals;
+    table_data $assists;
+}
+table_trailer;
+table_spacer 3;
+}
+html_trailer;
+close $html_out;
+
+
+#Player Stats Table
+set html_out [open girls_stats_2015.html w];
+html_header;
+unset goals;
+unset assists;
+foreach team {Varsity JV Freshmen} {
+    set player_list_tmp [db eval "SELECT name FROM player_table WHERE team=\"$team\""]; 
+    #puts $player_list_tmp;
+    set player_list {};
+    foreach player $player_list_tmp {
+	if {![regexp $player $player_list]} {
+	    lappend player_list $player;
+	}
+    }
+    #puts $player_list;
+    
+    foreach player $player_list {
+	set goals($player) 0;
+	set assists($player) 0;
+	set points($player) 0;
+
+	set goal_list [db eval "SELECT goals FROM player_table WHERE name=\"$player\""];
+	foreach game_goals $goal_list {
+	    incr goals($player) $game_goals;
+	    incr points($player) [expr $game_goals * 3];
+
+	}
+	set assist_list [db eval "SELECT assists FROM player_table WHERE name=\"$player\""];
+	foreach game_assists $assist_list {
+	    incr assists($player) $game_assists;
+	    incr points($player) [expr $game_assists * 1];
+	}
+    }
+
+    #CREATE STATS Table
+    table_header "$team Statistics 2015";
+    table_row_start;
+    foreach item {Name Goals Assists Points} {table_data $item 1;}
+    table_row_end;
+    
+    foreach player $player_list {
+	table_row_start;
+	foreach item "$player $goals($player) $assists($player) $points($player)" {table_data $item;};
+	table_row_end;
+    }
+    table_trailer;
+    table_spacer 3;
+}
+html_trailer;
+close $html_out;
+
+set html_out [open girls_rosters_2015.html w];
+foreach roster {Varsity JV Freshmen} {
+    html_header;
+    table_header "$roster Roster 2015";
+    foreach player [subst $[subst $roster\_roster]] {
+	table_row_start;
+	table_data $player;
+	table_row_end;
+    }
+    html_trailer;
+    table_spacer 3;
+}
+close $html_out
+
+
+
+
+
+
+
+
+db close;
+close $fin;
+
+

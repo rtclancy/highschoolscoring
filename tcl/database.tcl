@@ -77,10 +77,15 @@ proc table_spacer {lines} {
     puts $::html_out "<br>";
 }
 
-proc html_header {} {
+proc html_header {{image 1}} {
     puts $::html_out "<html>"
-    #puts $::html_out "<body background=\"files/hs.jpg\">";
-    puts $::html_out "<body bgcolor=\"#42c020\">";
+    if {$image == 1} {
+	puts $::html_out "<body background=\"https://www.eteamz.com/guilfordhighschoolsoccer/files/G.gif\">";
+#	puts $::html_out "<body background=\"files/G.gif\">";
+    } else {
+    puts $::html_out "<body background=\"https://www.eteamz.com/guilfordhighschoolsoccer/files/hs.jpg\">";
+#    puts $::html_out "<body background=\"files/hs.jpg\">";
+    }
 
 }
 proc html_trailer {} {
@@ -88,12 +93,22 @@ proc html_trailer {} {
     puts $::html_out "</html>";
 }
 
-proc table_header {title} {
-    puts $::html_out "<table border=\"5\">"
+#style=\"
+#    position: fixed;
+#    top: 0;
+#    left: 0;
+#    width: 300px;\"
+
+proc table_header {title {alignment left}} {
+    puts $::html_out "<table 
+bgcolor=\"#42c020\" border=\"5\"
+align=\"$alignment\"
+>";
     puts $::html_out "<tbody>"
     puts $::html_out "<tr>";
-    puts $::html_out "<td><b>$title</td>";
+    puts $::html_out "<td style=\"color:white\"><b>$title</td>";
     puts $::html_out "</tr>";
+
 }
 
 proc table_trailer {} {
@@ -101,11 +116,12 @@ proc table_trailer {} {
     puts $::html_out "</table>";
 }
 
+#width:200px;
 proc table_data {data {bold 0}} {
     if {$bold} {
-	puts $::html_out "<td><b>$data</td>";
+	puts $::html_out "<td style=\"color:white\"><b>$data</td>";
     } else {
-	puts $::html_out "<td>$data</td>";
+	puts $::html_out "<td style=\"color:white\">$data</td>";
     }
 }
 proc table_row_start {} {
@@ -172,10 +188,10 @@ while {![eof $fin]} {
 #build game data, (draws data from both tables)
 
 set html_out [open girls_games_2015.html w];
-html_header;
+html_header 2;
 foreach team {Varsity JV Freshmen} {
 set game_list [db eval "SELECT date FROM game_table WHERE team=\"$team\""]; 
-table_header "$team Results 2015";
+table_header "$team Results 2015" top;
 table_row_start;
 foreach item {Date Opponent Home/Away Result Score Goals Assists} {table_data $item 1;}
 table_row_end;
@@ -202,7 +218,7 @@ close $html_out;
 
 #Player Stats Table
 set html_out [open girls_stats_2015.html w];
-html_header;
+html_header 2;
 unset goals;
 unset assists;
 foreach team {Varsity JV Freshmen} {
@@ -224,7 +240,7 @@ foreach team {Varsity JV Freshmen} {
 	set goal_list [db eval "SELECT goals FROM player_table WHERE name=\"$player\""];
 	foreach game_goals $goal_list {
 	    incr goals($player) $game_goals;
-	    incr points($player) [expr $game_goals * 3];
+	    incr points($player) [expr $game_goals * 2];
 
 	}
 	set assist_list [db eval "SELECT assists FROM player_table WHERE name=\"$player\""];
@@ -235,12 +251,12 @@ foreach team {Varsity JV Freshmen} {
     }
 
     #CREATE STATS Table
-    table_header "$team Statistics 2015";
+    table_header "$team Statistics 2015" top;
     table_row_start;
     foreach item {Name Goals Assists Points} {table_data $item 1;}
     table_row_end;
     
-    foreach player $player_list {
+    foreach player [lsort $player_list] {
 	table_row_start;
 	foreach item "$player $goals($player) $assists($player) $points($player)" {table_data $item;};
 	table_row_end;
@@ -253,8 +269,8 @@ close $html_out;
 
 set html_out [open girls_rosters_2015.html w];
 foreach roster {Varsity JV Freshmen} {
-    html_header;
-    table_header "$roster Roster 2015";
+    html_header 2;
+    table_header "$roster Roster 2015" "left";
     foreach player [subst $[subst $roster\_roster]] {
 	table_row_start;
 	table_data $player;

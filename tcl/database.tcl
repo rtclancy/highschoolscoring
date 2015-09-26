@@ -140,7 +140,8 @@ db eval {CREATE TABLE player_table(name text, goals int, assists int, points int
 
 
 #read game data from csv and populate tables
-set fin [open "../data/games.csv"];
+#set fin [open "../data/games.csv"];
+set fin [open "../data/database.xls\ -\ games.csv"];
 set header_line 1;
 gets $fin line_in;
 while {![eof $fin]} {
@@ -163,7 +164,8 @@ while {![eof $fin]} {
 }
 
 #read player data from csv and populate tables
-set fin [open "../data/players.csv"];
+#set fin [open "../data/players.csv"];
+set fin [open "../data/database.xls\ -\ players.csv"];
 set header_line 1;
 gets $fin line_in;
 while {![eof $fin]} {
@@ -191,8 +193,17 @@ set html_out [open girls_games_2015.html w];
 html_header 2;
 foreach team {Varsity JV Freshmen} {
 set game_list [db eval "SELECT date FROM game_table WHERE team=\"$team\""]; 
-table_header "$team Results 2015" top;
+
+#wins, losses, ties
+foreach result {W L T} {
+    set number_of_$result [llength [db eval "SELECT win_loss FROM game_table WHERE team=\"$team\" AND win_loss=\"$result\""]];
+    puts [subst $[subst number_of_$result]];
+			   
+}
+
+table_header "$team Results 2015 ($number_of_W-$number_of_L-$number_of_T)" top;
 table_row_start;
+
 foreach item {Date Opponent Home/Away Result Score Goals Assists} {table_data $item 1;}
 table_row_end;
 foreach game $game_list {

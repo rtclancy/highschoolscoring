@@ -144,7 +144,8 @@ db eval {CREATE TABLE player_table(name text, goals int, assists int, points int
 set fin [open "../data/database.xls\ -\ games.csv"];
 set header_line 1;
 gets $fin line_in;
-while {![eof $fin]} {
+set last_line 0;
+while {1} {
     if {$header_line} {
 	set header_line 0;
     } else {
@@ -160,15 +161,20 @@ while {![eof $fin]} {
 #	exit;
 	db eval "INSERT INTO game_table VALUES($db_values)";
     }
+    if {$last_line} break;
     gets $fin line_in;
+    if [eof $fin] {set last_line 1;}
 }
+#check if final line is valid game
+
 
 #read player data from csv and populate tables
 #set fin [open "../data/players.csv"];
 set fin [open "../data/database.xls\ -\ players.csv"];
 set header_line 1;
 gets $fin line_in;
-while {![eof $fin]} {
+set last_line 0;
+while {1} {
     if {$header_line} {
 	set header_line 0;
     } else {
@@ -184,7 +190,9 @@ while {![eof $fin]} {
 #	exit;
 	db eval "INSERT INTO player_table VALUES($db_values)";
     }
+    if {$last_line} break;
     gets $fin line_in;
+    if [eof $fin] {set last_line 1;}
 }
 
 #build game data, (draws data from both tables)
